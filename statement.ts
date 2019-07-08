@@ -2,7 +2,6 @@ import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 export function statement (invoice: IInvoice, plays: IPlays) {
   let totalAmount = 0
-  let volumeCredits = 0
 
   let result = `Statement for ${invoice.customer}\n`
 
@@ -10,6 +9,8 @@ export function statement (invoice: IInvoice, plays: IPlays) {
     result += `  ${playFor(perf).name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
     totalAmount += amountFor(perf)
   }
+
+  let volumeCredits = 0
   for (let perf of invoice.performances) {
     volumeCredits += volumeCreditFor(perf)
   }
