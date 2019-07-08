@@ -1,1 +1,1 @@
-Add amount to IPerformanceEnrich
+Use perf.amount
