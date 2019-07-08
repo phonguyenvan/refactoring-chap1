@@ -34,10 +34,10 @@ export function renderPlainText (statementData: IStatement, plays: IPlays) {
   result += `You earned ${totalVolumeCredits()} credits\n`
   return result
 
-  function amountFor(perf: IPerformance) {
+  function amountFor(perf: IPerformanceEnrich) {
     let result = 0
 
-    switch (playFor(perf).type) {
+    switch (perf.play.type) {
       case EPlayType.TRADGEDY:
         result = 40000
         if (perf.audience > 30) {
@@ -52,20 +52,16 @@ export function renderPlainText (statementData: IStatement, plays: IPlays) {
         result += 300 * perf.audience
         break
       default:
-        throw new Error(`unknown type: ${playFor(perf).type}`)
+        throw new Error(`unknown type: ${perf.play.type}`)
     }
 
     return result
   }
 
-  function playFor(perf: IPerformance): IPlay {
-    return plays[perf.playId]
-  }
-
-  function volumeCreditFor(perf: IPerformance) {
+  function volumeCreditFor(perf: IPerformanceEnrich) {
     let result = 0
     result += Math.max(perf.audience - 30, 0)
-    if (playFor(perf).type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
+    if (perf.play.type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
     return result    
   }
 
