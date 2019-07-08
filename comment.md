@@ -1,1 +1,1 @@
-Use inline variable to replace
+Use inline variable to this amount
