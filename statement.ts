@@ -1,6 +1,7 @@
 import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 interface IPerformanceEnrich extends IPerformance {
+  play: IPlay
 }
 
 interface IStatement {
@@ -16,14 +17,18 @@ export function statement(invoice: IInvoice, plays: IPlays) {
   return renderPlainText(statementData, plays)
 
   function enrichPerformance(perf: IPerformance) {
-    return { ...perf }
+    return { ...perf, play: playFor(perf) }
+  }
+
+  function playFor(perf: IPerformance): IPlay {
+    return plays[perf.playId]
   }
 }
 
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`
   for (let perf of statementData.performances) {
-    result += `  ${playFor(perf).name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
+    result += `  ${perf.play.name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
   }
   result += `Amount owed is ${usd(totalAmount() / 100)} \n`
   result += `You earned ${totalVolumeCredits()} credits\n`
