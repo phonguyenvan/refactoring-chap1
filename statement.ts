@@ -1,4 +1,4 @@
-import { IInvoice, IPlays, EPlayType } from './metadata'
+import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 export function statement (invoice: IInvoice, plays: IPlays) {
   let totalAmount = 0
@@ -9,6 +9,18 @@ export function statement (invoice: IInvoice, plays: IPlays) {
 
   for (let perf of invoice.performances) {
     const play = plays[perf.playId]
+    const thisAmount = amountFor(perf, play)
+    volumeCredits += Math.max(perf.audience - 30, 0)
+    if (play.type == EPlayType.COMEDY) volumeCredits += Math.floor(perf.audience / 5)
+
+    result += `  ${play.name}: ${format(thisAmount / 100)} (${perf.audience} seats)\n`
+    totalAmount += thisAmount
+  }
+  result += `Amount owed is ${format(totalAmount / 100)} \n`
+  result += `You earned ${volumeCredits} credits\n`
+  return result
+
+  function amountFor(perf: IPerformance, play: IPlay) {
     let thisAmount = 0
 
     switch (play.type) {
@@ -29,13 +41,6 @@ export function statement (invoice: IInvoice, plays: IPlays) {
         throw new Error(`unknown type: ${play.type}`)
     }
 
-    volumeCredits += Math.max(perf.audience - 30, 0)
-    if (play.type == EPlayType.COMEDY) volumeCredits += Math.floor(perf.audience / 5)
-
-    result += `  ${play.name}: ${format(thisAmount / 100)} (${perf.audience} seats)\n`
-    totalAmount += thisAmount
+    return thisAmount
   }
-  result += `Amount owed is ${format(totalAmount / 100)} \n`
-  result += `You earned ${volumeCredits} credits\n`
-  return result
 }
