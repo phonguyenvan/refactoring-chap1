@@ -1,20 +1,7 @@
-import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
-
-interface IPerformanceEnrich extends IPerformance {
-  play: IPlay
-  amount?: number
-  volumeCredits?: number
-}
-
-interface IStatement {
-  customer: string
-  performances: IPerformanceEnrich[]
-  totalAmount?: number
-  totalVolumeCredits?: number
-}
+import { IInvoice, IPlays, EPlayType, IPerformance, IPlay, IStatement, IPerformanceEnrich } from './metadata'
 
 class PerformanceCalculator {
-  constructor(public perf: IPerformanceEnrich, public play: IPlay) { }
+  constructor(public perf: IPerformance, public play: IPlay) { }
 
   getAmount() {
     throw new Error('subclass responsibility')
@@ -53,32 +40,27 @@ class TradgedyCalculator extends PerformanceCalculator {
 }
 
 export function createStatementData(invoice: IInvoice, plays: IPlays) {
-  const statementData1: IStatement = {
-    customer: invoice.customer,
-    performances: invoice.performances.map(enrichPerformance),
-  };
-  const statementData: IStatement = {
-    ...statementData1,
-    totalAmount: totalAmount(statementData1),
-    totalVolumeCredits: totalVolumeCredits(statementData1)
-  }
-  return statementData
+  const result: Partial<IStatement> = {}
+  result.customer = invoice.customer
+  result.performances = invoice.performances.map(enrichPerformance),
+  result.totalAmount = totalAmount(result)
+  result.totalVolumeCredits = totalVolumeCredits(result)
+  return result
 
   function enrichPerformance(perf: IPerformance) {
-    const p1 = { ...perf, play: playFor(perf) }
-    const performanceCalculator = createPerformanceCalculator(p1, playFor(perf))
-    return {
-      ...p1,
-      amount: performanceCalculator.getAmount(),
-      volumeCredits: performanceCalculator.getVolumeCredits()
-    }
+    const result: Partial<IPerformanceEnrich> = { ...perf }
+    const performanceCalculator = createPerformanceCalculator(perf, playFor(perf))
+    result.amount = performanceCalculator.getAmount()
+    result.volumeCredits = performanceCalculator.getVolumeCredits()
+    result.play = performanceCalculator.play
+    return result as IPerformanceEnrich
   }
 
   function playFor(perf: IPerformance): IPlay {
     return plays[perf.playId]
   }
 
-  function totalAmount(statementData: IStatement) {
+  function totalAmount(statementData: Partial<IStatement>) {
     let result = 0
     for (let perf of statementData.performances) {
       result += perf.amount
@@ -86,7 +68,7 @@ export function createStatementData(invoice: IInvoice, plays: IPlays) {
     return result
   }
 
-  function createPerformanceCalculator(perf: IPerformanceEnrich, play: IPlay) {
+  function createPerformanceCalculator(perf: IPerformance, play: IPlay) {
     if (play.type === EPlayType.TRADGEDY) return new TradgedyCalculator(perf, play)
     if (play.type === EPlayType.COMEDY) return new ComedyCalculator(perf, play)
     throw new Error(`unknown type: ${play.type}`)
@@ -94,11 +76,11 @@ export function createStatementData(invoice: IInvoice, plays: IPlays) {
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
-  const statementData = createStatementData(invoice, plays)
-  return renderPlainText(statementData, plays)
+  const statementData = createStatementData(invoice, plays) as IStatement
+  return renderPlainText(statementData)
 }
 
-function totalVolumeCredits(statementData: IStatement) {
+function totalVolumeCredits(statementData: Partial<IStatement>) {
   let result = 0
   for (let perf of statementData.performances) {
     result += perf.volumeCredits
@@ -106,7 +88,7 @@ function totalVolumeCredits(statementData: IStatement) {
   return result
 }
 
-export function renderPlainText(statementData: IStatement, plays: IPlays) {
+export function renderPlainText(statementData: IStatement) {
   let result = `Statement for ${statementData.customer}\n`
   for (let perf of statementData.performances) {
     result += `  ${perf.play.name}: ${usd(perf.amount / 100)} (${perf.audience} seats)\n`

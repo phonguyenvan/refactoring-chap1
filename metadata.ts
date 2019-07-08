@@ -21,3 +21,16 @@ export interface IInvoice { // hoá đơn
   customer: string
   performances: IPerformance[]
 }
+
+export interface IPerformanceEnrich extends IPerformance {
+  play: IPlay
+  amount: number
+  volumeCredits: number
+}
+
+export interface IStatement {
+  customer: string
+  performances: IPerformanceEnrich[]
+  totalAmount: number
+  totalVolumeCredits: number
+}
