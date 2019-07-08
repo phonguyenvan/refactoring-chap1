@@ -1,1 +1,1 @@
-Add customer to IStatement
+Add performances to IStatement

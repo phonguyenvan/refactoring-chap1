@@ -2,18 +2,20 @@ import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 interface IStatement {
   customer: string
+  performances: IPerformance[]
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
   const statementData: IStatement = {
-    customer: invoice.customer
+    customer: invoice.customer,
+    performances: invoice.performances,
   };
-  return renderPlainText(statementData, invoice, plays)
+  return renderPlainText(statementData, plays)
 }
 
-export function renderPlainText (statementData: IStatement, invoice: IInvoice, plays: IPlays) {
+export function renderPlainText (statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`
-  for (let perf of invoice.performances) {
+  for (let perf of statementData.performances) {
     result += `  ${playFor(perf).name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
   }
   result += `Amount owed is ${usd(totalAmount() / 100)} \n`
@@ -57,7 +59,7 @@ export function renderPlainText (statementData: IStatement, invoice: IInvoice, p
 
   function totalVolumeCredits() {
     let result = 0
-    for (let perf of invoice.performances) {
+    for (let perf of statementData.performances) {
       result += volumeCreditFor(perf)
     }
     return result
@@ -65,7 +67,7 @@ export function renderPlainText (statementData: IStatement, invoice: IInvoice, p
 
   function totalAmount() {
     let result = 0
-    for (let perf of invoice.performances) {
+    for (let perf of statementData.performances) {
       result += amountFor(perf)
     }
     return result
