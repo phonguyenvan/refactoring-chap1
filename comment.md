@@ -1,1 +1,1 @@
-Add volumeCredits to performance
+Use volumeCredits on totalVolumeCredits
