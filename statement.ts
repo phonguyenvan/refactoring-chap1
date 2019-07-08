@@ -9,13 +9,9 @@ export function statement (invoice: IInvoice, plays: IPlays) {
     result += `  ${playFor(perf).name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
     totalAmount += amountFor(perf)
   }
-
-  let volumeCredits = 0
-  for (let perf of invoice.performances) {
-    volumeCredits += volumeCreditFor(perf)
-  }
+  
   result += `Amount owed is ${usd(totalAmount / 100)} \n`
-  result += `You earned ${volumeCredits} credits\n`
+  result += `You earned ${totalVolumeCredits()} credits\n`
   return result
 
   function amountFor(perf: IPerformance) {
@@ -51,6 +47,14 @@ export function statement (invoice: IInvoice, plays: IPlays) {
     result += Math.max(perf.audience - 30, 0)
     if (playFor(perf).type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
     return result    
+  }
+
+  function totalVolumeCredits() {
+    let volumeCredits = 0
+    for (let perf of invoice.performances) {
+      volumeCredits += volumeCreditFor(perf)
+    }
+    return volumeCredits
   }
 
   function usd(value: number) {
