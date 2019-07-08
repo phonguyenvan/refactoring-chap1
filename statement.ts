@@ -8,22 +8,21 @@ export function statement (invoice: IInvoice, plays: IPlays) {
   const { format } = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })
 
   for (let perf of invoice.performances) {
-    const play = plays[perf.playId]
-    const thisAmount = amountFor(perf, play)
+    const thisAmount = amountFor(perf)
     volumeCredits += Math.max(perf.audience - 30, 0)
-    if (play.type == EPlayType.COMEDY) volumeCredits += Math.floor(perf.audience / 5)
+    if (playFor(perf).type == EPlayType.COMEDY) volumeCredits += Math.floor(perf.audience / 5)
 
-    result += `  ${play.name}: ${format(thisAmount / 100)} (${perf.audience} seats)\n`
+    result += `  ${playFor(perf).name}: ${format(thisAmount / 100)} (${perf.audience} seats)\n`
     totalAmount += thisAmount
   }
   result += `Amount owed is ${format(totalAmount / 100)} \n`
   result += `You earned ${volumeCredits} credits\n`
   return result
 
-  function amountFor(perf: IPerformance, play: IPlay) {
+  function amountFor(perf: IPerformance) {
     let result = 0
 
-    switch (play.type) {
+    switch (playFor(perf).type) {
       case EPlayType.TRADGEDY:
         result = 40000
         if (perf.audience > 30) {
@@ -38,9 +37,13 @@ export function statement (invoice: IInvoice, plays: IPlays) {
         result += 300 * perf.audience
         break
       default:
-        throw new Error(`unknown type: ${play.type}`)
+        throw new Error(`unknown type: ${playFor(perf).type}`)
     }
 
     return result
+  }
+
+  function playFor(perf: IPerformance): IPlay {
+    return plays[perf.playId]
   }
 }

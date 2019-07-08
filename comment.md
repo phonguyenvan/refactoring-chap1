@@ -1,1 +1,1 @@
-Change  var name from thisAmount to result
+Use inline variable to replace
