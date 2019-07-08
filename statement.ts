@@ -2,6 +2,7 @@ import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 interface IPerformanceEnrich extends IPerformance {
   play: IPlay
+  amount?: number
 }
 
 interface IStatement {
@@ -17,12 +18,37 @@ export function statement(invoice: IInvoice, plays: IPlays) {
   return renderPlainText(statementData, plays)
 
   function enrichPerformance(perf: IPerformance) {
-    return { ...perf, play: playFor(perf) }
+    const p1 = { ...perf, play: playFor(perf) }
+    return { ...p1, amount: amountFor(p1) }
   }
 
   function playFor(perf: IPerformance): IPlay {
     return plays[perf.playId]
   }
+}
+
+function amountFor(perf: IPerformanceEnrich) {
+  let result = 0
+
+  switch (perf.play.type) {
+    case EPlayType.TRADGEDY:
+      result = 40000
+      if (perf.audience > 30) {
+        result += 1000 * (perf.audience - 30)
+      }
+      break
+    case EPlayType.COMEDY:
+      result = 30000
+      if (perf.audience > 20) {
+        result += 10000 + 500 * (perf.audience - 20)
+      }
+      result += 300 * perf.audience
+      break
+    default:
+      throw new Error(`unknown type: ${perf.play.type}`)
+  }
+
+  return result
 }
 
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
@@ -34,29 +60,7 @@ export function renderPlainText (statementData: IStatement, plays: IPlays) {
   result += `You earned ${totalVolumeCredits()} credits\n`
   return result
 
-  function amountFor(perf: IPerformanceEnrich) {
-    let result = 0
 
-    switch (perf.play.type) {
-      case EPlayType.TRADGEDY:
-        result = 40000
-        if (perf.audience > 30) {
-          result += 1000 * (perf.audience - 30)
-        }
-        break
-      case EPlayType.COMEDY:
-        result = 30000
-        if (perf.audience > 20) {
-          result += 10000 + 500 * (perf.audience - 20)
-        }
-        result += 300 * perf.audience
-        break
-      default:
-        throw new Error(`unknown type: ${perf.play.type}`)
-    }
-
-    return result
-  }
 
   function volumeCreditFor(perf: IPerformanceEnrich) {
     let result = 0
