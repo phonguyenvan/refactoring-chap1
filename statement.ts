@@ -1,16 +1,23 @@
 import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
+interface IPerformanceEnrich extends IPerformance {
+}
+
 interface IStatement {
   customer: string
-  performances: IPerformance[]
+  performances: IPerformanceEnrich[]
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
   const statementData: IStatement = {
     customer: invoice.customer,
-    performances: invoice.performances,
+    performances: invoice.performances.map(enrichPerformance),
   };
   return renderPlainText(statementData, plays)
+
+  function enrichPerformance(perf: IPerformance) {
+    return { ...perf }
+  }
 }
 
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
