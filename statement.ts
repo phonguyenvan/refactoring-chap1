@@ -13,7 +13,7 @@ interface IStatement {
   totalVolumeCredits?: number
 }
 
-export function statement(invoice: IInvoice, plays: IPlays) {
+export function createStatementData(invoice: IInvoice, plays: IPlays) {
   const statementData1: IStatement = {
     customer: invoice.customer,
     performances: invoice.performances.map(enrichPerformance),
@@ -23,8 +23,8 @@ export function statement(invoice: IInvoice, plays: IPlays) {
     totalAmount: totalAmount(statementData1),
     totalVolumeCredits: totalVolumeCredits(statementData1)
   }
-  return renderPlainText(statementData, plays)
-
+  return statementData
+  
   function enrichPerformance(perf: IPerformance) {
     const p1 = { ...perf, play: playFor(perf) }
     return { ...p1, amount: amountFor(p1), volumeCredits: volumeCreditFor(p1) }
@@ -41,6 +41,11 @@ export function statement(invoice: IInvoice, plays: IPlays) {
     }
     return result
   }
+}
+
+export function statement(invoice: IInvoice, plays: IPlays) {
+  const statementData = createStatementData(invoice, plays)
+  return renderPlainText(statementData, plays)
 }
 
 function amountFor(perf: IPerformanceEnrich) {
