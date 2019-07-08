@@ -9,13 +9,20 @@ interface IPerformanceEnrich extends IPerformance {
 interface IStatement {
   customer: string
   performances: IPerformanceEnrich[]
+  totalAmount?: number
+  totalVolumeCredits?: number
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
-  const statementData: IStatement = {
+  const statementData1: IStatement = {
     customer: invoice.customer,
     performances: invoice.performances.map(enrichPerformance),
   };
+  const statementData: IStatement = {
+    ...statementData1,
+    totalAmount: totalAmount(statementData1),
+    totalVolumeCredits: totalVolumeCredits(statementData1)
+  }
   return renderPlainText(statementData, plays)
 
   function enrichPerformance(perf: IPerformance) {
@@ -25,6 +32,14 @@ export function statement(invoice: IInvoice, plays: IPlays) {
 
   function playFor(perf: IPerformance): IPlay {
     return plays[perf.playId]
+  }
+
+  function totalAmount(statementData: IStatement) {
+    let result = 0
+    for (let perf of statementData.performances) {
+      result += perf.amount
+    }
+    return result
   }
 }
 
@@ -59,30 +74,23 @@ function volumeCreditFor(perf: IPerformanceEnrich) {
   return result    
 }
 
+function totalVolumeCredits(statementData: IStatement) {
+  let result = 0
+  for (let perf of statementData.performances) {
+    result += perf.volumeCredits
+  }
+  return result
+}
+
+
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`
   for (let perf of statementData.performances) {
     result += `  ${perf.play.name}: ${usd(perf.amount / 100)} (${perf.audience} seats)\n`
   }
-  result += `Amount owed is ${usd(totalAmount() / 100)} \n`
-  result += `You earned ${totalVolumeCredits()} credits\n`
+  result += `Amount owed is ${usd(statementData.totalAmount / 100)} \n`
+  result += `You earned ${statementData.totalVolumeCredits} credits\n`
   return result
-
-  function totalVolumeCredits() {
-    let result = 0
-    for (let perf of statementData.performances) {
-      result += perf.volumeCredits
-    }
-    return result
-  }
-
-  function totalAmount() {
-    let result = 0
-    for (let perf of statementData.performances) {
-      result += perf.amount
-    }
-    return result
-  }
 
   function usd(value: number) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })

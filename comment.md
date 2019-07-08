@@ -1,1 +1,1 @@
-Use volumeCredits on totalVolumeCredits
+Add totalVolumeCredits and totalAmount
