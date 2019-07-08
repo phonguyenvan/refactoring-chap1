@@ -1,15 +1,18 @@
 import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 
 interface IStatement {
+  customer: string
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
-  const statementData: IStatement = {};
+  const statementData: IStatement = {
+    customer: invoice.customer
+  };
   return renderPlainText(statementData, invoice, plays)
 }
 
 export function renderPlainText (statementData: IStatement, invoice: IInvoice, plays: IPlays) {
-  let result = `Statement for ${invoice.customer}\n`
+  let result = `Statement for ${statementData.customer}\n`
   for (let perf of invoice.performances) {
     result += `  ${playFor(perf).name}: ${usd(amountFor(perf) / 100)} (${perf.audience} seats)\n`
   }
