@@ -1,1 +1,1 @@
-Use inline variable to this amount
+Extract function and rename to `result`

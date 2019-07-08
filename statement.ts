@@ -8,9 +8,7 @@ export function statement (invoice: IInvoice, plays: IPlays) {
   const { format } = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })
 
   for (let perf of invoice.performances) {
-    volumeCredits += Math.max(perf.audience - 30, 0)
-    if (playFor(perf).type == EPlayType.COMEDY) volumeCredits += Math.floor(perf.audience / 5)
-
+    volumeCredits += volumeCreditFor(perf)
     result += `  ${playFor(perf).name}: ${format(amountFor(perf) / 100)} (${perf.audience} seats)\n`
     totalAmount += amountFor(perf)
   }
@@ -44,5 +42,12 @@ export function statement (invoice: IInvoice, plays: IPlays) {
 
   function playFor(perf: IPerformance): IPlay {
     return plays[perf.playId]
+  }
+
+  function volumeCreditFor(perf: IPerformance) {
+    let result = 0
+    result += Math.max(perf.audience - 30, 0)
+    if (playFor(perf).type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
+    return result    
   }
 }
