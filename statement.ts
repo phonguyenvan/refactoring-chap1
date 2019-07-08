@@ -14,34 +14,43 @@ interface IStatement {
 }
 
 class PerformanceCalculator {
-  constructor(public perf: IPerformanceEnrich, public play: IPlay) {}
+  constructor(public perf: IPerformanceEnrich, public play: IPlay) { }
 
   getAmount() {
-    let result = 0
+    throw new Error('subclass responsibility')
+  }
 
-    switch (this.perf.play.type) {
-      case EPlayType.TRADGEDY:
-        result = 40000
-        if (this.perf.audience > 30) {
-          result += 1000 * (this.perf.audience - 30)
-        }
-        break
-      case EPlayType.COMEDY:
-        result = 30000
-        if (this.perf.audience > 20) {
-          result += 10000 + 500 * (this.perf.audience - 20)
-        }
-        result += 300 * this.perf.audience
-        break
-      default:
-        throw new Error(`unknown type: ${this.perf.play.type}`)
-    }
-  
+  getVolumeCredits() {
+    let result = 0
+    result += Math.max(this.perf.audience - 30, 0)
     return result
   }
 }
 
+class ComedyCalculator extends PerformanceCalculator {
+  getAmount() {
+    let result = 30000
+    if (this.perf.audience > 20) {
+      result += 10000 + 500 * (this.perf.audience - 20)
+    }
+    result += 300 * this.perf.audience
+    return result
+  }
 
+  getVolumeCredits() {
+    return super.getVolumeCredits() + Math.floor(this.perf.audience / 5)
+  }
+}
+class TradgedyCalculator extends PerformanceCalculator {
+  getAmount() {
+    let result = 0
+    result = 40000
+    if (this.perf.audience > 30) {
+      result += 1000 * (this.perf.audience - 30)
+    }
+    return result
+  }
+}
 
 export function createStatementData(invoice: IInvoice, plays: IPlays) {
   const statementData1: IStatement = {
@@ -54,14 +63,15 @@ export function createStatementData(invoice: IInvoice, plays: IPlays) {
     totalVolumeCredits: totalVolumeCredits(statementData1)
   }
   return statementData
-  
+
   function enrichPerformance(perf: IPerformance) {
     const p1 = { ...perf, play: playFor(perf) }
-    return { ...p1, amount: amountFor(p1), volumeCredits: volumeCreditFor(p1) }
-  }
-
-  function amountFor(perf: IPerformanceEnrich) {
-    return new PerformanceCalculator(perf, playFor(perf)).getAmount()
+    const performanceCalculator = createPerformanceCalculator(p1, playFor(perf))
+    return {
+      ...p1,
+      amount: performanceCalculator.getAmount(),
+      volumeCredits: performanceCalculator.getVolumeCredits()
+    }
   }
 
   function playFor(perf: IPerformance): IPlay {
@@ -75,18 +85,17 @@ export function createStatementData(invoice: IInvoice, plays: IPlays) {
     }
     return result
   }
+
+  function createPerformanceCalculator(perf: IPerformanceEnrich, play: IPlay) {
+    if (play.type === EPlayType.TRADGEDY) return new TradgedyCalculator(perf, play)
+    if (play.type === EPlayType.COMEDY) return new ComedyCalculator(perf, play)
+    throw new Error(`unknown type: ${play.type}`)
+  }
 }
 
 export function statement(invoice: IInvoice, plays: IPlays) {
   const statementData = createStatementData(invoice, plays)
   return renderPlainText(statementData, plays)
-}
-
-function volumeCreditFor(perf: IPerformanceEnrich) {
-  let result = 0
-  result += Math.max(perf.audience - 30, 0)
-  if (perf.play.type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
-  return result    
 }
 
 function totalVolumeCredits(statementData: IStatement) {
@@ -97,7 +106,7 @@ function totalVolumeCredits(statementData: IStatement) {
   return result
 }
 
-export function renderPlainText (statementData: IStatement, plays: IPlays) {
+export function renderPlainText(statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`
   for (let perf of statementData.performances) {
     result += `  ${perf.play.name}: ${usd(perf.amount / 100)} (${perf.audience} seats)\n`
