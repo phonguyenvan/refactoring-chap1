@@ -13,6 +13,36 @@ interface IStatement {
   totalVolumeCredits?: number
 }
 
+class PerformanceCalculator {
+  constructor(public perf: IPerformanceEnrich, public play: IPlay) {}
+
+  getAmount() {
+    let result = 0
+
+    switch (this.perf.play.type) {
+      case EPlayType.TRADGEDY:
+        result = 40000
+        if (this.perf.audience > 30) {
+          result += 1000 * (this.perf.audience - 30)
+        }
+        break
+      case EPlayType.COMEDY:
+        result = 30000
+        if (this.perf.audience > 20) {
+          result += 10000 + 500 * (this.perf.audience - 20)
+        }
+        result += 300 * this.perf.audience
+        break
+      default:
+        throw new Error(`unknown type: ${this.perf.play.type}`)
+    }
+  
+    return result
+  }
+}
+
+
+
 export function createStatementData(invoice: IInvoice, plays: IPlays) {
   const statementData1: IStatement = {
     customer: invoice.customer,
@@ -28,6 +58,10 @@ export function createStatementData(invoice: IInvoice, plays: IPlays) {
   function enrichPerformance(perf: IPerformance) {
     const p1 = { ...perf, play: playFor(perf) }
     return { ...p1, amount: amountFor(p1), volumeCredits: volumeCreditFor(p1) }
+  }
+
+  function amountFor(perf: IPerformanceEnrich) {
+    return new PerformanceCalculator(perf, playFor(perf)).getAmount()
   }
 
   function playFor(perf: IPerformance): IPlay {
@@ -48,30 +82,6 @@ export function statement(invoice: IInvoice, plays: IPlays) {
   return renderPlainText(statementData, plays)
 }
 
-function amountFor(perf: IPerformanceEnrich) {
-  let result = 0
-
-  switch (perf.play.type) {
-    case EPlayType.TRADGEDY:
-      result = 40000
-      if (perf.audience > 30) {
-        result += 1000 * (perf.audience - 30)
-      }
-      break
-    case EPlayType.COMEDY:
-      result = 30000
-      if (perf.audience > 20) {
-        result += 10000 + 500 * (perf.audience - 20)
-      }
-      result += 300 * perf.audience
-      break
-    default:
-      throw new Error(`unknown type: ${perf.play.type}`)
-  }
-
-  return result
-}
-
 function volumeCreditFor(perf: IPerformanceEnrich) {
   let result = 0
   result += Math.max(perf.audience - 30, 0)
@@ -86,7 +96,6 @@ function totalVolumeCredits(statementData: IStatement) {
   }
   return result
 }
-
 
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`

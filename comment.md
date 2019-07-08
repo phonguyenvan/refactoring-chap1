@@ -1,1 +1,1 @@
-Add  createStatementData
+Add  getAmount method
