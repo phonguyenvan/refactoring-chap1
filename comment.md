@@ -1,1 +1,1 @@
-Extract function and rename to `result`
+Extract format function and rename to usd
