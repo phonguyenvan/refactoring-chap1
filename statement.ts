@@ -3,6 +3,7 @@ import { IInvoice, IPlays, EPlayType, IPerformance, IPlay } from './metadata'
 interface IPerformanceEnrich extends IPerformance {
   play: IPlay
   amount?: number
+  volumeCredits?: number
 }
 
 interface IStatement {
@@ -19,7 +20,7 @@ export function statement(invoice: IInvoice, plays: IPlays) {
 
   function enrichPerformance(perf: IPerformance) {
     const p1 = { ...perf, play: playFor(perf) }
-    return { ...p1, amount: amountFor(p1) }
+    return { ...p1, amount: amountFor(p1), volumeCredits: volumeCreditFor(p1) }
   }
 
   function playFor(perf: IPerformance): IPlay {
@@ -51,6 +52,13 @@ function amountFor(perf: IPerformanceEnrich) {
   return result
 }
 
+function volumeCreditFor(perf: IPerformanceEnrich) {
+  let result = 0
+  result += Math.max(perf.audience - 30, 0)
+  if (perf.play.type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
+  return result    
+}
+
 export function renderPlainText (statementData: IStatement, plays: IPlays) {
   let result = `Statement for ${statementData.customer}\n`
   for (let perf of statementData.performances) {
@@ -59,15 +67,6 @@ export function renderPlainText (statementData: IStatement, plays: IPlays) {
   result += `Amount owed is ${usd(totalAmount() / 100)} \n`
   result += `You earned ${totalVolumeCredits()} credits\n`
   return result
-
-
-
-  function volumeCreditFor(perf: IPerformanceEnrich) {
-    let result = 0
-    result += Math.max(perf.audience - 30, 0)
-    if (perf.play.type == EPlayType.COMEDY) result += Math.floor(perf.audience / 5)
-    return result    
-  }
 
   function totalVolumeCredits() {
     let result = 0
